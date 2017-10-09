@@ -150,7 +150,7 @@ function sortSite(a,b) {
 		return 1;
 	  return 0;
 	}
-
+var hasQueryLayer = 0;
 var siteArray=[];
 var siteLayer = new L.geoJson();	
  function displayBySite() {
@@ -158,6 +158,10 @@ var siteLayer = new L.geoJson();
 	document.getElementById("mapid").style.display = "block";
 	 mappie.setView([40.2159676, -74.7602929], 13);
 	googleStr.addTo(mappie);
+	 if (hasQueryLayer === 1) {
+	 	queryLayer.removeFrom(mappie);
+		hasQueryLayer = 0;
+	 }
 	
 	$.getJSON(siteDirectoryURL, function(data) {
 			siteLayer = new L.geoJson();
@@ -267,7 +271,7 @@ function zoomToSite(p) {
 			}).addTo(mappie);
 		siteMarker.openPopup();	
 		mappie.setView([lat,lng],16);
-
+		hasQueryLayer = 1;
 		$('html, body').animate({scrollTop: '0px'}, 3);
 		displaySiteTable(e);
 		});
