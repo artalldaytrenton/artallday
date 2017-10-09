@@ -89,12 +89,12 @@ siteDirectoryURL=encodeURI("https://artalldaytrenton.carto.com/api/v2/sql?&forma
 console.log(siteDirectoryURL);
 
 
-var mappie = L.map('mapid').setView([40.224, -74.76], 14);
+var mappie = L.map('mapid');
 googleStr = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
 	maxZoom: 20,
     subdomains:['mt0','mt1','mt2','mt3'],
 	attribution: 'uses google streets'
-}).addTo(mappie);
+});
 
 
 function getSiteColor(d) {
@@ -139,6 +139,8 @@ var siteLayer = new L.geoJson();
  function displayBySite() {
  
 	document.getElementById("mapid").style.display = "block";
+	 mappie.setView([40.224, -74.76], 14);
+	googleStr.addTo(mappie);
 	
 	$.getJSON(siteDirectoryURL, function(data) {
 			siteLayer = new L.geoJson();
