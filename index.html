@@ -209,8 +209,6 @@ function getSiteArtists(site,spot) {
 	var siteArtists = rawList;		
 
 	if ((siteArtists.length >1) || (site === 'Studio B Bakery and Bistro') || (site === 'Artifacts Gallery')) {
-	document.getElementById(spot).innerHTML+=
-	"<h3>Featuring:</h3>";
 	siteArtists.sort(sortName);
 
 		for (n=0; n<=siteArtists.length-1; n++) {
