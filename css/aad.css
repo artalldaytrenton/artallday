@@ -54,7 +54,7 @@ button { background-color:#fff; font-family:"bebas_neuebook"; letter-spacing:.1e
 @media screen and (max-width: 600px) {
 	#mapid{height:300px;}
 	h1{font-size:130%}
-	h2{font-size:110%}
+	h2{font-size:120%}
 	h3{font-size:110%;color:#444}
 	h4{font-size:105%}
 	body {font-size:90%}
