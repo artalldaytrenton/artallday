@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Art All Day 2017</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="jquery/jquery-1.6.4.min.js"></script>
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+   integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+   crossorigin=""/>
+ <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+   integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+   crossorigin=""></script>
+  <link rel="stylesheet" href="css/stylesheet.css">   
+  <link rel="stylesheet" href="css/aad.css">
+
+
+<style>
+		
+</style>
+
+</head>				
+	
+<body>
+<div id="page-wrap">
+<table class='header'>
+<div class = "headerImage"><img class='headerPic' src="aadlogo.jpg"></div>
+<div name="titlebar">
+<h1>Open Studios | Trenton</br>
+<span style='color:#ff0066'>Nov 4, 2017</span>  Noon-6 pm</h1>
+<div id='menubar'>
+<button name="artistSortButton" onClick='doArtists()'>Artists</button>
+<button name="siteSortButton" onClick='doSites()'>Sites</button>
+<button name="siteSortButton" onClick='doInfo()'>Info</button>
+</div>
+</table>
+</div>
+</div>
+<hr>
+<div id="mapid" style="display:none"></div>
+
+<div id="artTableHolder" style="height:100%; overflow-y:auto;padding-top:5px;">
+</div>
+</div>
+<div id = 'leftspacer'></div>
+<div id = 'sponsorBar' style='display:none'></div>
+<div id = 'infoSpace' style='display:none'>
+
+<h2>Art. Trenton. Everywhere.</h2>
+This is Trenton's biggest open studio tour yet, with 37 sites all around the city -- seven of which didn't even exist last year! We have around 100 artists participating individually or as part of collectives. Several very special private studios are open for the first time, and unique pop-up events and exhibits are dotted throughout the city. There's so much going on we had to add an hour!
+<br><br>
+Everything starts & ends at <b>Artworks</b>, where you'll also find everything you'll need: maps, guides, food from our participating food trucks, tours, trolleys, and plenty of space to park. Every participating artist also has a piece in the group show.
+
+<h2>How to do Art All Day</h2>
+
+<h3>The map and guide</h3> 
+Art All Day is for the explorers at heart. In addition to the print guide and map, there's an online, interactive map and guide this year -- so you can really tell where you're going and what you'll find. Hit "Sites" above to see what's where, and "Artists" for a directory.
+
+<h3>12 pm: Bike Tour</h3> 
+The bike tour departs from Artworks at <b>noon</b>, for a meandering trip around the sites. For many, this is the most fulfilling way of experiencing Art All Day. <b>Bring your own bike!</b>
+
+<h3>Walking Tours</h3>
+<ul><li><span style='font-family:bebas_neuebold; font-size:120%;letter-spacing:.1em'>12:30</span> "Scale it Up!" - with Illia Barger and Lori Johansson. A conversation about the techniques and mediums used to create large-scale public art pieces in downtown Trenton.</li>
+<li><span style='font-family:bebas_neuebold; font-size:120%;letter-spacing:.1em'>2:00</span> -- with Artworks Executive Director Lauren Otis. A tour of downtown Art All Day sites and public art.</li>
+<li><span style='font-family:bebas_neuebold; font-size:120%;letter-spacing:.1em'>3:30</span> "The Creek to Canal Creative District" - with Jonathan Gordon (Isles). See what the buzz is about! Visiting sites, public art, and development projects in Trenton's first arts district.</li>
+</ul>
+
+<h3>Trolleys</h3>
+<ul><li><span style='font-family:bebas_neuebold; font-size:120%;letter-spacing:.1em'>Hop-On Hop-Off (Downtown)</span>
+We have a <i>lot</i> of sites clustered in downtown Trenton and the Creek to Canal Creative District this year! We've added a continuous hop-on hop-off trolley loop to help you get around them.</li>
+<li><span style='font-family:bebas_neuebold; font-size:120%;letter-spacing:.1em'>Tour Trolleys</span>
+There will be two loops to help visitors see outer sites. Each loop lasts about two hours and visits up to six studios, pop-ups, or host spaces.</li>
+</ul>
+
+<h3>6-8 pm: Reception</h3> 
+When you're properly tuckered out from seeing everything, meander back to Artworks for the group exhibit and reception.
+
+
+
+</div>
+
+<script type="text/javascript" src="d3.min.js"></script>
+<script type="text/javascript">
+
+
+var siteMode = 0;
+artistDirectoryURL = encodeURI("https://artalldaytrenton.carto.com/api/v2/sql?&format=JSON&q=SELECT * FROM exhibiting_artists");
+siteDirectoryURL=encodeURI("https://artalldaytrenton.carto.com/api/v2/sql?&format=GeoJSON&q=SELECT * FROM sites_1");
+console.log(siteDirectoryURL);
+
+
+var mappie = L.map('mapid').setView([40.224, -74.76], 14);
+googleStr = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+	maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3'],
+	attribution: 'uses google streets'
+}).addTo(mappie);
+
+
+function getSiteColor(d) {
+  switch (d) {
+    case 'Permanent':
+      return '#ff0066';
+	case 'Pop-Up':
+	  return '#b30000';
+    case 'Private':
+      return '#ff9900';
+    case 'Public Art':
+      return '#b2df8a';
+    default:
+      return '#FFEDA0';
+  }
+  }
+
+
+
+var siteList;
+var siteData = [];
+
+
+function sortName(a,b) {
+	  if (a.first_name < b.first_name)
+		return -1;
+	  if (a.first_name > b.first_name)
+		return 1;
+	  return 0;
+	}
+
+function sortSite(a,b) {
+	  if (a.site < b.site)
+		return -1;
+	  if (a.site > b.site)
+		return 1;
+	  return 0;
+	}
+
+var siteArray=[];
+var siteLayer = new L.geoJson();	
+ function displayBySite() {
+ 
+	document.getElementById("mapid").style.display = "block";
+	
+	$.getJSON(siteDirectoryURL, function(data) {
+			siteLayer = new L.geoJson();
+			siteArray = [];
+			siteLayer = L.geoJson(data, {
+
+			pointToLayer: function(feature, latlng) {
+					return new L.CircleMarker(latlng, {radius: 10, color:'#fff', opacity:0.5, fillOpacity: 0.8, fillColor:getSiteColor(feature.properties.sitetype)});	
+				},
+			
+				interactive: true,
+				onEachFeature: function (feature, layer) {
+					lat = feature.properties.lat;
+					lng = feature.properties.lng;
+					var popupContent = 
+					"<h3>"+ feature.properties.site + "</h3>" +
+						 "<h4 style='margin-top:-10px'>" + feature.properties.siteaddress + "</h4>";					 ;
+					layer.bindPopup(popupContent, {'maxWidth':'260', 'height':'auto'});
+					siteArray.push(feature.properties);
+
+				}
+				
+			}).addTo(mappie);
+			displayAllSites(siteArray);
+			siteLayer.on("click", function(event) {
+					var clickedSite = event.layer;
+					document.getElementById("artTableHolder").innerHTML = '';
+					displaySiteTable(clickedSite.feature.properties);			
+			});
+				
+			});
+	}
+	
+	function displayAllSites(s) {
+		s.sort(sortSite);
+		for (n=0; n<=siteArray.length-1; n++) {
+			displaySiteTable(siteArray[n]);
+		}
+	
+	}
+var siteMarker = new L.CircleMarker();	
+
+function getSiteArtists(site,spot) {
+		var artistquery = " WHERE site = '" + site + "'";
+		var artistqueryURL = artistDirectoryURL + artistquery;
+		var siteArtistDirectory = $.getJSON(artistqueryURL, function(data) {
+			rawList = data.rows;
+			
+	var siteArtists = rawList;		
+
+	if ((siteArtists.length >1) || (site === 'Studio B Bakery and Bistro') || (site === 'Artifacts Gallery')) {
+	document.getElementById(spot).innerHTML+=
+	"<h3>Featuring:</h3>";
+	siteArtists.sort(sortName);
+
+		for (n=0; n<=siteArtists.length-1; n++) {
+		
+				var titleSetup =  
+				"<div class='titleSmall'>" +
+				"<h3>" + siteArtists[n].first_name+ " " + siteArtists[n].last_name + "</h3>" +
+				"</div>";
+				var picSetup = 
+				"<div class='imgcontainersmall'>" + 
+				"<img class = 'artistPicSmall' src='" + siteArtists[n].imglink1 + "'>" +
+				"</div>";
+
+				var info = 	
+				titleSetup + picSetup;
+				
+				document.getElementById(spot).innerHTML +=
+				"<div class='artistPodSmall'>"+
+				info +
+				"</div>" ;
+
+			}
+		}	
+
+		});
+}
+
+var queryLayer = new L.geoJson();
+function zoomToSite(p) {
+	document.getElementById('artTableHolder').innerHTML='';
+	queryLayer.removeFrom(mappie);
+	e = siteArray[p];
+	
+	query = " WHERE site = '" + e.site + "'";
+	queryURL = siteDirectoryURL + query;
+	$.getJSON(queryURL, function(data) {
+			queryLayer = L.geoJson(data, {
+
+			pointToLayer: function(feature, latlng) {
+					var popupContent = 
+					"<h3>"+ feature.properties.site + "</h3>" +
+						 "<h4 style='margin-top:-10px'>" + feature.properties.siteaddress + "</h4>";					 ;
+					siteMarker = new L.CircleMarker(latlng, {radius: 10, color:'#fff', opacity:0.5, fillOpacity: 0.8, fillColor:'#00ffff'});
+					siteMarker.bindPopup(popupContent);
+					return siteMarker;
+					
+				},
+			
+				interactive: true,
+				onEachFeature: function (feature, layer) {
+					lat=feature.geometry.coordinates[1];
+					lng = feature.geometry.coordinates[0];
+					console.log(lat, lng);
+				}
+				
+			}).addTo(mappie);
+		siteMarker.openPopup();	
+		mappie.setView([lat,lng],16);
+
+		$('html, body').animate({scrollTop: '0px'}, 3);
+		displaySiteTable(e);
+		});
+	}
+	var querySite;	
+	function displaySiteTable(e) {	
+	
+				sitecontainerid = n.toString();
+					var i=0;
+					var pos = 0;
+					for (i=0;i<siteArray.length-1;i++) {
+							if (siteArray[i].site === e.site){
+								pos = i;
+							}
+						}
+	
+				document.getElementById("mapid").style.height = '300px';
+				var picSetup = 
+				"<div class='siteimgcontainer'>" + 
+				"<img class = 'sitePic' src='" + e.imglink + "'>" +
+				"</div>";
+				
+				var mobileTitleSetup =  
+				"<div class='mobileTitle'>" +
+				"<h2>" + e.site + "</h2>" +
+				"<h3 style='margin-top:-15px;'>" + e.siteaddress + " " +
+				"<span class='maplink' onClick='zoomToSite(" + pos + " )'>MAP</span>" + "</h3>" +
+				"</div>";
+				
+				var regularTitleSetup =  
+				"<div class='regularTitle'>" +
+				"<h2>" + e.site + "</h2>" +
+				"<h3 style='margin-top:-15px;'>" + e.siteaddress + " " +
+				"<span class = 'maplink' onClick='zoomToSite(" + pos + " )'>MAP</span>" + "</h3>" +
+				"</div>";
+
+				var info = 	
+				mobileTitleSetup +				
+				picSetup +
+				regularTitleSetup +
+				"<div class='siteDesc'>" +
+				e.siteinfo + "<br>" +
+				"<div class='siteHighlight'>" +
+				"</div>"+
+				"</div>" ;		
+
+				document.getElementById("artTableHolder").innerHTML +=
+				"<div class='sitePod'>" +
+				"<table>" + info + "</table>"+
+				"<table class='innerspacer'></table>" +
+				"<table id='"+ sitecontainerid + "'>" + 
+				"</table>" + 
+				"</div>" + 
+				"<table class='spacer'></table>";
+				getSiteArtists(e.site,sitecontainerid);				
+				
+			
+		}		
+	
+			
+	
+function doArtists() {
+	siteMode = 0;
+ 	document.getElementById("artTableHolder").innerHTML ='';
+ 	document.getElementById("artTableHolder").style.display = 'block';
+	document.getElementById('sponsorBar').style.display = 'none';
+	document.getElementById('infoSpace').style.display = 'none';
+	var artistDirectory = $.getJSON(artistDirectoryURL, function(data) {
+	rawList = data.rows;
+	displayByArtist(rawList);
+	
+	});
+}
+
+function doSites(list) {
+	siteMode = 1;
+ 	document.getElementById("artTableHolder").innerHTML ='';
+ 	document.getElementById("artTableHolder").style.display = 'block';
+	document.getElementById('sponsorBar').style.display = 'none';
+	document.getElementById('infoSpace').style.display = 'none';
+	mappie.setView([40.224, -74.76], 14);
+	mappie.closePopup();
+	displayBySite();
+}
+
+
+function displayByArtist(list) {
+
+	if (siteMode ===0) {
+		document.getElementById("artTableHolder").innerHTML ='';
+		document.getElementById("mapid").style.display ='none';
+	}	
+	var siteArtists = list;		
+
+
+	siteArtists.sort(sortName);
+
+		for (n=0; n<=siteArtists.length-1; n++) {
+		
+				var websitespacer = '';
+				if (siteArtists[n].website != '') {
+					websitespacer = " | ";
+				}
+				var siteCompile;
+				if (siteArtists[n].subsite !== null) {
+					siteCompile = 
+					"<h3>Site: </b>" + siteArtists[n].site + " | " + 
+						siteArtists[n].subsite + " | " +
+						siteArtists[n].sitelocation + "</h3>";
+					}
+				else {
+					siteCompile = 
+					"<h3>Site: </b>" + siteArtists[n].site + " | " + 
+					siteArtists[n].sitelocation + "</h3>";
+				}
+								
+
+				var picSetup = 
+				"<div class='imgcontainer'>" + 
+				"<img class = 'artistPic' src='" + siteArtists[n].imglink1 + "'>" +
+				"</div>";
+				
+				var mobileTitleSetup =  
+				"<div class='mobileTitle'>" +
+				"<h2>" + siteArtists[n].first_name+ " " + siteArtists[n].last_name + "</h2>" +
+				"<p class='locationheader'>" + siteArtists[n].city + ", "+ siteArtists[n].state + 
+				websitespacer +
+				"<a href='"+ siteArtists[n].website +"'>" + siteArtists[n].website + "</a>" +	
+				"</p>" +
+				"<hr>" +
+				"</div>";
+				
+				var regularTitleSetup =  
+				"<div class='regularTitle'>" +
+				"<h2>" + siteArtists[n].first_name+ " " + siteArtists[n].last_name + "</h2>" +
+				"<p class='locationheader'>" +
+				siteArtists[n].city + ", "+ siteArtists[n].state + 
+				websitespacer +
+				"<a href='"+ siteArtists[n].website +"'>" + siteArtists[n].website + "</a>" +
+				"</p>" +				
+				"<hr>" +
+				"</div>";
+
+				var info = 	
+				mobileTitleSetup +				
+				picSetup +
+				regularTitleSetup +
+				"<div class='artistDesc'>" +
+				siteArtists[n]._desc + "<br>" +
+				"<div class='siteHighlight'>" +
+				siteCompile +
+				"</div>"+
+				"</div>" ;
+				
+				artistcontainerid = n.toString();
+				document.getElementById("artTableHolder").innerHTML +=
+				"<div class='artPod'>" +
+				"<table id='"+ artistcontainerid + "'>" + 
+				info +
+				"</table>" + 
+				"</div>" +
+				"<table class='spacer'></table>";
+
+			}
+}	
+	
+			
+			
+	
+	
+
+
+
+var rawList=[];
+function init() {
+	var artistDirectory = $.getJSON(artistDirectoryURL, function(data) {
+	rawList = data.rows;
+	displayBySite();
+	
+	});
+}
+
+	init();
+
+function doInfo() {
+	document.getElementById('mapid').style.display = 'none';
+	document.getElementById('artTableHolder').style.display = 'none';
+	document.getElementById('sponsorBar').style.display = 'block';
+	document.getElementById('infoSpace').style.display = 'block';
+	
+
+}
+
+	
+</script> 
+  
+
+</body>
+</html>
