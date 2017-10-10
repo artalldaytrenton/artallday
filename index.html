@@ -158,7 +158,7 @@ var siteLayer = new L.geoJson();
 	document.getElementById("mapid").style.display = "block";
 	 mappie.setView([40.2159676, -74.7602929], 13);
 	googleStr.addTo(mappie);
-	 if (hasQueryLayer != 0) {
+	 if (hasQueryLayer !== 0) {
 	 	queryLayer.removeFrom(mappie);
 		hasQueryLayer = 0;
 	 }
@@ -244,6 +244,7 @@ var queryLayer = new L.geoJson();
 function zoomToSite(p) {
 	document.getElementById('artTableHolder').innerHTML='';
 	queryLayer.removeFrom(mappie);
+	hasQueryLayer = 1;
 	e = siteArray[p];
 	
 	query = " WHERE site = '" + e.site + "'";
@@ -271,7 +272,6 @@ function zoomToSite(p) {
 			}).addTo(mappie);
 		siteMarker.openPopup();	
 		mappie.setView([lat,lng],16);
-		hasQueryLayer = 1;
 		$('html, body').animate({scrollTop: '0px'}, 3);
 		displaySiteTable(e);
 		});
